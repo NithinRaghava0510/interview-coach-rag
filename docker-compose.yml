@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.6-pg17
+    container_name: interview-coach-postgres
+    environment:
+      POSTGRES_DB: interview_coach
+      POSTGRES_USER: interview
+      POSTGRES_PASSWORD: interview
+    ports:
+      - "5433:5432"
+    volumes:
+      - interview_coach_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U interview -d interview_coach"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  interview_coach_pgdata:

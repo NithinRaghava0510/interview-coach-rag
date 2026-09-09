@@ -1,0 +1,12 @@
+Jordan Lee
+Full Stack Software Engineer
+
+Experience
+Cloud Platform Engineer — ExampleCo
+Built REST APIs using FastAPI and PostgreSQL. Added Redis caching that reduced repeated database reads. Containerized services with Docker and deployed workloads to Kubernetes. Created GitHub Actions CI/CD pipelines and application dashboards for latency and error monitoring.
+
+Software Engineer — Demo Systems
+Developed React and TypeScript interfaces for internal operations tools. Integrated frontend workflows with REST APIs, implemented validation and loading/error states, and wrote unit tests. Worked with AWS S3, Lambda, CloudWatch, and RDS.
+
+Skills
+Python, FastAPI, React, TypeScript, PostgreSQL, Redis, AWS, Docker, Kubernetes, GitHub Actions, REST APIs, SQL
