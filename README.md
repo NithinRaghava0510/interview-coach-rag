@@ -1,71 +1,52 @@
-Interview Coach RAG
+# Interview Coach RAG
 
 Interview Coach RAG is a full-stack interview practice app that generates questions from a candidate's resume and a target job description, then evaluates answers using the same source material as context.
 
-The main goal of the project was to build a RAG workflow around a real use case instead of a generic "chat with a PDF" example. The application handles document ingestion, chunking, embeddings, vector retrieval, question generation, answer evaluation, and interview history from one UI.
+This application handles document ingestion, chunking, embeddings, vector retrieval, question generation, answer evaluation, and interview history from one UI.
 
-Features
+## Features
 
-Upload a resume as PDF, DOCX, or TXT
+- Upload a resume as PDF, DOCX, or TXT
+- Add a job description for the role being targeted
+- Generate interview questions based on both documents
+- Store resume and job-description chunks in PostgreSQL with pgvector
+- Retrieve relevant context for each question using vector similarity
+- Submit answers and get structured feedback
+- Score answers on relevance, clarity, structure, and technical depth
+- Keep previous interview sessions and evaluations in PostgreSQL
+- Run the full application in demo mode without an OpenAI API key
+- Start the local database with Docker Compose
 
-Add a job description for the role being targeted
+## Tech stack
 
-Generate interview questions based on both documents
+### Backend
 
-Store resume and job-description chunks in PostgreSQL with pgvector
+- Python
+- FastAPI
+- SQLAlchemy
+- Pydantic
+- PostgreSQL
+- pgvector
+- OpenAI API
 
-Retrieve relevant context for each question using vector similarity
+### Frontend
 
-Submit answers and get structured feedback
+- React
+- TypeScript
+- Vite
+- React Router
 
-Score answers on relevance, clarity, structure, and technical depth
+### Local infrastructure
 
-Keep previous interview sessions and evaluations in PostgreSQL
+- Docker / Docker Compose
+- PostgreSQL 17 + pgvector
+- GitHub Actions
 
-Run the full application in demo mode without an OpenAI API key
-
-Start the local database with Docker Compose
-
-Tech stack
-
-Backend
-
-Python
-
-FastAPI
-
-SQLAlchemy
-
-Pydantic
-
-PostgreSQL
-
-pgvector
-
-OpenAI API
-
-Frontend
-
-React
-
-TypeScript
-
-Vite
-
-React Router
-
-Local infrastructure
-
-Docker / Docker Compose
-
-PostgreSQL 17 + pgvector
-
-GitHub Actions
-
-How it works
+## How it works
 
 The application uses the resume and job description as the knowledge base for an interview session.
 
+```text
 Resume + Job Description
           |
           v
@@ -90,6 +71,7 @@ Resume + Job Description
           |                    |
           v                    v
  Question generation     Answer evaluation
+```
 
 When a new interview is created, the backend extracts text from the uploaded resume, splits the resume and job description into chunks, creates an embedding for each chunk, and stores everything with the interview session.
 
@@ -97,8 +79,9 @@ Question generation starts by retrieving the chunks that are most relevant to th
 
 The retrieval step runs again when an answer is submitted. The evaluator receives the question, the candidate's answer, and the most relevant resume/JD context, then returns scores, strengths, improvement areas, and a stronger example answer.
 
-Project structure
+## Project structure
 
+```text
 interview-coach-rag/
 ├── backend/
 │   ├── app/
@@ -131,90 +114,109 @@ interview-coach-rag/
 ├── .github/workflows/ci.yml
 ├── docker-compose.yml
 └── README.md
+```
 
-Local setup
+## Local setup
 
 I use three terminals while developing locally: one for PostgreSQL, one for FastAPI, and one for Vite.
 
-Prerequisites
+### Prerequisites
 
 Install the following before starting:
 
-Python 3.11 or 3.12
-
-Node.js 22+
-
-Docker Desktop
-
-Git
+- Python 3.11 or 3.12
+- Node.js 22+
+- Docker Desktop
+- Git
 
 VS Code is optional, but the commands below assume the project is opened from its root folder in a VS Code terminal.
 
-1. Start PostgreSQL
+### 1. Start PostgreSQL
 
 From the project root:
 
+```powershell
 docker compose up -d postgres
+```
 
 Check the container:
 
+```powershell
 docker compose ps
+```
 
 The local database configuration is:
 
+```text
 Database: interview_coach
 User:     interview
 Password: interview
 Host:     localhost
 Port:     5432
+```
 
-The backend enables the vector extension and creates the application tables on startup.
+The backend enables the `vector` extension and creates the application tables on startup.
 
-2. Set up the backend
+### 2. Set up the backend
 
 Open another terminal:
 
+```powershell
 cd backend
 Copy-Item .env.example .env
 py -3.12 -m venv .venv
 .venv\Scripts\python -m pip install --upgrade pip
 .venv\Scripts\python -m pip install -r requirements.txt
+```
 
 Start FastAPI:
 
+```powershell
 .venv\Scripts\python -m uvicorn app.main:app --reload
+```
 
 The API will be available at:
 
+```text
 http://localhost:8000
+```
 
 Swagger UI:
 
+```text
 http://localhost:8000/docs
+```
 
 Health check:
 
+```text
 http://localhost:8000/health
+```
 
-For macOS/Linux, replace .venv\Scripts\python with .venv/bin/python and use cp .env.example .env instead of Copy-Item.
+For macOS/Linux, replace `.venv\Scripts\python` with `.venv/bin/python` and use `cp .env.example .env` instead of `Copy-Item`.
 
-3. Set up the frontend
+### 3. Set up the frontend
 
 Open a third terminal:
 
+```powershell
 cd frontend
 Copy-Item .env.example .env
 npm install
 npm run dev
+```
 
 Vite will start the frontend at:
 
+```text
 http://localhost:5173
+```
 
-Environment variables
+## Environment variables
 
 The backend example environment file contains the local defaults:
 
+```env
 APP_NAME=Interview Coach RAG
 API_PREFIX=/api
 DATABASE_URL=postgresql+psycopg://interview:interview@localhost:5432/interview_coach
@@ -224,44 +226,46 @@ CHAT_MODEL=gpt-5.6-luna
 EMBEDDING_MODEL=text-embedding-3-small
 EMBEDDING_DIMENSIONS=1536
 DEMO_MODE=true
+```
 
 The frontend only needs the API URL:
 
+```env
 VITE_API_URL=http://localhost:8000
+```
 
-.env files are ignored by Git. API keys should never be committed to the repository.
+`.env` files are ignored by Git. API keys should never be committed to the repository.
 
-Demo mode
+## Demo mode
 
-The project defaults to DEMO_MODE=true so the application can be run without an API key.
+The project defaults to `DEMO_MODE=true` so the application can be run without an API key.
 
 This mode was useful while building the ingestion, retrieval, database, and frontend flows because those parts could be tested without making an API request every time.
 
 Demo mode still uses the same main application flow:
 
-documents are parsed and chunked;
+- documents are parsed and chunked;
+- chunks are persisted in PostgreSQL;
+- deterministic local vectors are generated;
+- vector similarity search runs through pgvector;
+- fallback question generation creates interview questions;
+- fallback evaluation returns deterministic feedback.
 
-chunks are persisted in PostgreSQL;
+There are two small files in `sample-data/` that can be used to test the application immediately:
 
-deterministic local vectors are generated;
-
-vector similarity search runs through pgvector;
-
-fallback question generation creates interview questions;
-
-fallback evaluation returns deterministic feedback.
-
-There are two small files in sample-data/ that can be used to test the application immediately:
-
+```text
 sample-data/sample_resume.txt
 sample-data/sample_job_description.txt
+```
 
-Using the OpenAI API
+## Using the OpenAI API
 
-Once the local flow is working, update backend/.env:
+Once the local flow is working, update `backend/.env`:
 
+```env
 OPENAI_API_KEY=your_api_key_here
 DEMO_MODE=false
+```
 
 Then restart FastAPI.
 
@@ -271,31 +275,34 @@ The current embedding configuration uses 1536 dimensions. If the embedding model
 
 For a clean development reset:
 
+```powershell
 docker compose down -v
 docker compose up -d postgres
+```
 
-Data model
+## Data model
 
 The database is intentionally small for the first version of the application.
 
-InterviewSession
+### `InterviewSession`
 
 Stores the role, difficulty, job description, resume file name, and creation time for an interview.
 
-DocumentChunk
+### `DocumentChunk`
 
 Stores individual resume/job-description chunks and their vector embeddings.
 
-InterviewQuestion
+### `InterviewQuestion`
 
 Stores generated questions, category, display position, explanation for why the question was asked, and source evidence.
 
-AnswerEvaluation
+### `AnswerEvaluation`
 
 Stores the submitted answer and all evaluation results.
 
 The relationships are roughly:
 
+```text
 InterviewSession
     |
     +--- DocumentChunk
@@ -303,99 +310,92 @@ InterviewSession
     +--- InterviewQuestion
               |
               +--- AnswerEvaluation
+```
 
-API endpoints
+## API endpoints
 
 The current API is deliberately small:
 
+```text
 GET    /health
 GET    /api/sessions
 POST   /api/sessions
 GET    /api/sessions/{session_id}
 POST   /api/sessions/{session_id}/generate
 POST   /api/sessions/questions/{question_id}/answer
+```
 
 For development, Swagger is the easiest way to inspect request/response schemas and test individual endpoints:
 
+```text
 http://localhost:8000/docs
+```
 
-Running tests
+## Running tests
 
 Backend tests:
 
+```powershell
 cd backend
 .venv\Scripts\python -m pytest
+```
 
 Frontend production build:
 
+```powershell
 cd frontend
 npm run build
+```
 
 The repository also contains a GitHub Actions workflow for basic CI checks.
 
-A few implementation choices
+## A few implementation choices
 
-PostgreSQL + pgvector instead of a separate vector database
+### PostgreSQL + pgvector instead of a separate vector database
 
 For this project, keeping relational data and embeddings in the same database made the architecture simpler. Interview sessions, questions, evaluations, source chunks, and vectors all belong to the same domain, so PostgreSQL is enough for the current scale.
 
 It also makes local development easier because only one data service has to be started.
 
-Retrieval happens twice
+### Retrieval happens twice
 
 Retrieval is not only used when generating questions. It runs again when an answer is evaluated.
 
 That second retrieval is important because the context that is useful for generating a question is not always the best context for evaluating the resulting answer.
 
-Demo mode uses the same application path
+### Demo mode uses the same application path
 
 I did not want a demo switch that simply returned hard-coded frontend data. Demo mode replaces the external model calls, but documents still go through parsing, chunking, persistence, and vector retrieval. This made it much more useful for debugging the actual application.
 
-No authentication in the first version
+### No authentication in the first version
 
 The first version is focused on the interview/RAG workflow. There is no user-account system yet, so the current app should be treated as a local/single-user project rather than a production multi-tenant service.
 
-Known limitations
+## Known limitations
 
 A few things are intentionally simple right now:
 
-chunking is lightweight and not document-layout aware;
-
-retrieval is vector-only rather than hybrid search;
-
-there is no reranking stage;
-
-sessions are not tied to authenticated users;
-
-document ingestion happens in the request path instead of a background worker;
-
-the current UI is text based and does not include voice interviews;
-
-database schema changes are created directly rather than managed through migrations.
+- chunking is lightweight and not document-layout aware;
+- retrieval is vector-only rather than hybrid search;
+- there is no reranking stage;
+- sessions are not tied to authenticated users;
+- document ingestion happens in the request path instead of a background worker;
+- the current UI is text based and does not include voice interviews;
+- database schema changes are created directly rather than managed through migrations.
 
 These are the main areas I would address before treating the project as a production application.
 
-Next steps
+## Next steps
 
 The next improvements I want to make are:
 
-Add JWT authentication and per-user interview history.
-
-Add follow-up questions based on the previous answer.
-
-Add hybrid keyword + vector retrieval and reranking.
-
-Move document ingestion to a background worker.
-
-Add Redis for caching/session support.
-
-Add voice input and speech-to-text for mock interviews.
-
-Add Alembic migrations.
-
-Add retrieval/evaluation metrics so RAG quality can be measured instead of judged only from the UI.
-
-Store uploaded documents in S3 when deploying to AWS.
-
-Deploy the backend, frontend, PostgreSQL, and supporting services to AWS.
-
+1. Add JWT authentication and per-user interview history.
+2. Add follow-up questions based on the previous answer.
+3. Add hybrid keyword + vector retrieval and reranking.
+4. Move document ingestion to a background worker.
+5. Add Redis for caching/session support.
+6. Add voice input and speech-to-text for mock interviews.
+7. Add Alembic migrations.
+8. Add retrieval/evaluation metrics so RAG quality can be measured instead of judged only from the UI.
+9. Store uploaded documents in S3 when deploying to AWS.
+10. Deploy the backend, frontend, PostgreSQL, and supporting services to AWS.
